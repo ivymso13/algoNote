@@ -816,12 +816,16 @@
             const saved = localStorage.getItem('categories');
             if (saved) {
                 const parsed = JSON.parse(saved);
-                // 기존 카테고리가 8개인 경우(구버전) 초기화
-                if (parsed.length > 2 && parsed.some(c => c.id === 'graph' || c.id === 'dp')) {
-                    categories = [...DEFAULT_CATEGORIES];
-                } else {
-                    categories = parsed;
-                }
+                const existingIds = new Set(parsed.map(c => c.id));
+                
+                // DEFAULT_CATEGORIES에 있지만 기존에 없는 카테고리 추가
+                DEFAULT_CATEGORIES.forEach(defaultCat => {
+                    if (!existingIds.has(defaultCat.id)) {
+                        parsed.push(defaultCat);
+                    }
+                });
+                
+                categories = parsed;
             } else {
                 categories = [...DEFAULT_CATEGORIES];
             }
@@ -855,7 +859,31 @@
 
         function loadNotes() {
             const saved = localStorage.getItem('algorithmNotes');
-            notes = saved ? JSON.parse(saved) : getSampleData();
+            const version = localStorage.getItem('notesVersion') || '1.0';
+            const currentVersion = '1.1'; // 세그먼트 트리 추가
+            
+            if (saved) {
+                notes = JSON.parse(saved);
+                
+                // 버전이 다르면 새로운 노트 병합
+                if (version !== currentVersion) {
+                    const sampleData = getSampleData();
+                    const existingTitles = new Set(notes.map(n => n.title));
+                    
+                    // 기존에 없는 새 노트만 추가
+                    sampleData.forEach(sample => {
+                        if (!existingTitles.has(sample.title)) {
+                            notes.push(sample);
+                        }
+                    });
+                    
+                    localStorage.setItem('notesVersion', currentVersion);
+                }
+            } else {
+                notes = getSampleData();
+                localStorage.setItem('notesVersion', currentVersion);
+            }
+            
             saveNotes();
         }
 

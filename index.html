@@ -419,6 +419,40 @@
             font-size: 13px;
         }
 
+        .code-tabs {
+            display: flex;
+            gap: 5px;
+        }
+
+        .code-tab {
+            padding: 6px 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            color: #abb2bf;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .code-tab:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .code-tab.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .code-content {
+            display: none;
+        }
+
+        .code-content.active {
+            display: block;
+        }
+
         .copy-btn {
             padding: 4px 12px;
             background: rgba(255, 255, 255, 0.1);
@@ -860,7 +894,7 @@
         function loadNotes() {
             const saved = localStorage.getItem('algorithmNotes');
             const version = localStorage.getItem('notesVersion') || '1.0';
-            const currentVersion = '1.1'; // 세그먼트 트리 추가
+            const currentVersion = '1.2'; // Python + C++ 코드 탭 추가
             
             if (saved) {
                 notes = JSON.parse(saved);
@@ -909,7 +943,7 @@
 ## 특징
 - 평균적으로 매우 빠른 성능
 - 제자리 정렬(in-place)`,
-                    code: `def quick_sort(arr, low, high):
+                    codePython: `def quick_sort(arr, low, high):
     if low < high:
         pi = partition(arr, low, high)
         quick_sort(arr, low, pi - 1)
@@ -925,7 +959,48 @@ def partition(arr, low, high):
             arr[i], arr[j] = arr[j], arr[i]
     
     arr[i + 1], arr[high] = arr[high], arr[i + 1]
-    return i + 1`,
+    return i + 1
+
+# 사용 예시
+arr = [10, 7, 8, 9, 1, 5]
+quick_sort(arr, 0, len(arr) - 1)
+print(arr)  # [1, 5, 7, 8, 9, 10]`,
+                    codeCpp: `#include <iostream>
+#include <vector>
+using namespace std;
+
+int partition(vector<int>& arr, int low, int high) {
+    int pivot = arr[high];
+    int i = low - 1;
+    
+    for (int j = low; j < high; j++) {
+        if (arr[j] <= pivot) {
+            i++;
+            swap(arr[i], arr[j]);
+        }
+    }
+    swap(arr[i + 1], arr[high]);
+    return i + 1;
+}
+
+void quick_sort(vector<int>& arr, int low, int high) {
+    if (low < high) {
+        int pi = partition(arr, low, high);
+        quick_sort(arr, low, pi - 1);
+        quick_sort(arr, pi + 1, high);
+    }
+}
+
+int main() {
+    vector<int> arr = {10, 7, 8, 9, 1, 5};
+    quick_sort(arr, 0, arr.size() - 1);
+    
+    for (int x : arr) {
+        cout << x << " ";
+    }
+    // 출력: 1 5 7 8 9 10
+    return 0;
+}`,
                     language: 'python',
                     timeComplexity: 'O(n log n) 평균',
                     spaceComplexity: 'O(log n)',
@@ -947,7 +1022,7 @@ def partition(arr, low, high):
 
 ## 전제 조건
 - 배열이 **반드시 정렬**되어 있어야 함`,
-                    code: `def binary_search(arr, target):
+                    codePython: `def binary_search(arr, target):
     left, right = 0, len(arr) - 1
     
     while left <= right:
@@ -960,7 +1035,40 @@ def partition(arr, low, high):
         else:
             right = mid - 1
     
-    return -1`,
+    return -1
+
+# 사용 예시
+arr = [1, 3, 5, 7, 9, 11, 13]
+print(binary_search(arr, 7))   # 3
+print(binary_search(arr, 6))   # -1`,
+                    codeCpp: `#include <iostream>
+#include <vector>
+using namespace std;
+
+int binary_search(vector<int>& arr, int target) {
+    int left = 0, right = arr.size() - 1;
+    
+    while (left <= right) {
+        int mid = left + (right - left) / 2;
+        
+        if (arr[mid] == target) {
+            return mid;
+        } else if (arr[mid] < target) {
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+    
+    return -1;
+}
+
+int main() {
+    vector<int> arr = {1, 3, 5, 7, 9, 11, 13};
+    cout << binary_search(arr, 7) << endl;  // 3
+    cout << binary_search(arr, 6) << endl;  // -1
+    return 0;
+}`,
                     language: 'python',
                     timeComplexity: 'O(log n)',
                     spaceComplexity: 'O(1)',
@@ -997,8 +1105,7 @@ def partition(arr, low, high):
 - 구간 질의를 O(log n)에 처리
 - 단일 원소 갱신도 O(log n)
 - 다양한 구간 연산 지원`,
-                    code: `# Python 구현
-class SegmentTree:
+                    codePython: `class SegmentTree:
     def __init__(self, arr):
         self.n = len(arr)
         self.tree = [0] * (4 * self.n)
@@ -1054,6 +1161,79 @@ seg_tree.update(1, 0, len(arr) - 1, 2, 6)  # arr[2] = 5 -> 6
 
 # 갱신 후 구간 합
 print(seg_tree.query(1, 0, len(arr) - 1, 1, 4))  # [3,6,7,9] = 25`,
+                    codeCpp: `#include <iostream>
+#include <vector>
+using namespace std;
+
+class SegmentTree {
+private:
+    int n;
+    vector<long long> tree;
+    
+    void build(vector<int>& arr, int node, int start, int end) {
+        if (start == end) {
+            tree[node] = arr[start];
+            return;
+        }
+        
+        int mid = (start + end) / 2;
+        build(arr, node * 2, start, mid);
+        build(arr, node * 2 + 1, mid + 1, end);
+        tree[node] = tree[node * 2] + tree[node * 2 + 1];
+    }
+    
+    void update(int node, int start, int end, int idx, long long val) {
+        if (start == end) {
+            tree[node] = val;
+            return;
+        }
+        
+        int mid = (start + end) / 2;
+        if (idx <= mid) {
+            update(node * 2, start, mid, idx, val);
+        } else {
+            update(node * 2 + 1, mid + 1, end, idx, val);
+        }
+        tree[node] = tree[node * 2] + tree[node * 2 + 1];
+    }
+    
+    long long query(int node, int start, int end, int left, int right) {
+        if (right < start || end < left) return 0;
+        
+        if (left <= start && end <= right) return tree[node];
+        
+        int mid = (start + end) / 2;
+        return query(node * 2, start, mid, left, right) +
+               query(node * 2 + 1, mid + 1, end, left, right);
+    }
+
+public:
+    SegmentTree(vector<int>& arr) {
+        n = arr.size();
+        tree.resize(4 * n);
+        build(arr, 1, 0, n - 1);
+    }
+    
+    void update(int idx, long long val) {
+        update(1, 0, n - 1, idx, val);
+    }
+    
+    long long query(int left, int right) {
+        return query(1, 0, n - 1, left, right);
+    }
+};
+
+int main() {
+    vector<int> arr = {1, 3, 5, 7, 9, 11};
+    SegmentTree seg_tree(arr);
+    
+    cout << seg_tree.query(1, 4) << endl;  // 24
+    
+    seg_tree.update(2, 6);
+    cout << seg_tree.query(1, 4) << endl;  // 25
+    
+    return 0;
+}`,
                     language: 'python',
                     timeComplexity: 'O(log n) - query, update',
                     spaceComplexity: 'O(n)',
@@ -1636,15 +1816,31 @@ int main() {
                         </div>
                     ` : ''}
 
-                    ${note.code ? `
+                    ${note.code || note.codePython || note.codeCpp ? `
                         <div class="section">
                             <h2 class="section-title">💻 코드</h2>
                             <div class="code-wrapper">
                                 <div class="code-header">
-                                    <span>${LANGUAGES[note.language]}</span>
+                                    <div class="code-tabs">
+                                        ${note.codePython ? `<button class="code-tab active" onclick="switchCodeTab(this, 'python')">Python</button>` : ''}
+                                        ${note.codeCpp ? `<button class="code-tab ${!note.codePython ? 'active' : ''}" onclick="switchCodeTab(this, 'cpp')">C++</button>` : ''}
+                                        ${note.code && !note.codePython && !note.codeCpp ? `<span>${LANGUAGES[note.language]}</span>` : ''}
+                                    </div>
                                     <button class="copy-btn" onclick="copyCode(this)">복사</button>
                                 </div>
-                                <pre><code class="language-${note.language}">${escapeHtml(note.code)}</code></pre>
+                                ${note.codePython ? `
+                                    <div class="code-content active" data-lang="python">
+                                        <pre><code class="language-python">${escapeHtml(note.codePython)}</code></pre>
+                                    </div>
+                                ` : ''}
+                                ${note.codeCpp ? `
+                                    <div class="code-content ${!note.codePython ? 'active' : ''}" data-lang="cpp">
+                                        <pre><code class="language-cpp">${escapeHtml(note.codeCpp)}</code></pre>
+                                    </div>
+                                ` : ''}
+                                ${note.code && !note.codePython && !note.codeCpp ? `
+                                    <pre><code class="language-${note.language}">${escapeHtml(note.code)}</code></pre>
+                                ` : ''}
                             </div>
                         </div>
                     ` : ''}
@@ -1871,12 +2067,31 @@ int main() {
         }
 
         function copyCode(btn) {
-            const code = btn.closest('.code-wrapper').querySelector('code').textContent;
+            const wrapper = btn.closest('.code-wrapper');
+            const activeCode = wrapper.querySelector('.code-content.active code') || wrapper.querySelector('code');
+            const code = activeCode.textContent;
             navigator.clipboard.writeText(code).then(() => {
                 const orig = btn.textContent;
                 btn.textContent = '복사됨!';
                 setTimeout(() => btn.textContent = orig, 2000);
             });
+        }
+
+        function switchCodeTab(btn, lang) {
+            const wrapper = btn.closest('.code-wrapper');
+            
+            // 모든 탭과 콘텐츠 비활성화
+            wrapper.querySelectorAll('.code-tab').forEach(tab => tab.classList.remove('active'));
+            wrapper.querySelectorAll('.code-content').forEach(content => content.classList.remove('active'));
+            
+            // 선택된 탭과 콘텐츠 활성화
+            btn.classList.add('active');
+            const content = wrapper.querySelector(`.code-content[data-lang="${lang}"]`);
+            if (content) {
+                content.classList.add('active');
+                // Prism.js 하이라이팅 재적용
+                Prism.highlightAllUnder(content);
+            }
         }
 
         function toggleTheme() {

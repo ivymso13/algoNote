@@ -894,7 +894,7 @@
         function loadNotes() {
             const saved = localStorage.getItem('algorithmNotes');
             const version = localStorage.getItem('notesVersion') || '1.0';
-            const currentVersion = '1.2'; // Python + C++ 코드 탭 추가
+            const currentVersion = '1.3'; // 모든 노트에 Python + C++ 코드 추가 완료
             
             if (saved) {
                 notes = JSON.parse(saved);
@@ -1270,8 +1270,7 @@ int main() {
 - 구간에 값 더하기
 - 구간을 특정 값으로 설정
 - 구간 업데이트가 빈번한 문제`,
-                    code: `# Python 구현
-class LazySegmentTree:
+                    codePython: `class LazySegmentTree:
     def __init__(self, arr):
         self.n = len(arr)
         self.tree = [0] * (4 * self.n)
@@ -1291,10 +1290,8 @@ class LazySegmentTree:
     def propagate(self, node, start, end):
         """lazy 값을 자식에게 전파"""
         if self.lazy[node] != 0:
-            # 현재 노드에 lazy 값 적용
             self.tree[node] += (end - start + 1) * self.lazy[node]
             
-            # 리프 노드가 아니면 자식에게 전파
             if start != end:
                 self.lazy[node * 2] += self.lazy[node]
                 self.lazy[node * 2 + 1] += self.lazy[node]
@@ -1308,7 +1305,6 @@ class LazySegmentTree:
         if right < start or end < left:
             return
         
-        # 현재 구간이 완전히 포함되는 경우
         if left <= start and end <= right:
             self.lazy[node] += diff
             self.propagate(node, start, end)
@@ -1333,19 +1329,107 @@ class LazySegmentTree:
             return self.tree[node]
         
         mid = (start + end) // 2
-        left_sum = self.query(node * 2, start, mid, left, right)
-        right_sum = self.query(node * 2 + 1, mid + 1, end, left, right)
-        return left_sum + right_sum
+        return self.query(node * 2, start, mid, left, right) + \
+               self.query(node * 2 + 1, mid + 1, end, left, right)
 
 # 사용 예시
 arr = [1, 3, 5, 7, 9, 11]
 lazy_tree = LazySegmentTree(arr)
 
-# 구간 [1, 4]에 5 더하기
-lazy_tree.update_range(1, 0, len(arr) - 1, 1, 4, 5)
+lazy_tree.update_range(1, 0, 5, 1, 4, 5)
+print(lazy_tree.query(1, 0, 5, 1, 4))  # 44`,
+                    codeCpp: `#include <iostream>
+#include <vector>
+using namespace std;
 
-# 구간 합 질의
-print(lazy_tree.query(1, 0, len(arr) - 1, 1, 4))  # [8,10,12,14] = 44`,
+class LazySegmentTree {
+private:
+    int n;
+    vector<long long> tree, lazy;
+    
+    void build(vector<int>& arr, int node, int start, int end) {
+        if (start == end) {
+            tree[node] = arr[start];
+            return;
+        }
+        
+        int mid = (start + end) / 2;
+        build(arr, node * 2, start, mid);
+        build(arr, node * 2 + 1, mid + 1, end);
+        tree[node] = tree[node * 2] + tree[node * 2 + 1];
+    }
+    
+    void propagate(int node, int start, int end) {
+        if (lazy[node] != 0) {
+            tree[node] += (end - start + 1) * lazy[node];
+            
+            if (start != end) {
+                lazy[node * 2] += lazy[node];
+                lazy[node * 2 + 1] += lazy[node];
+            }
+            
+            lazy[node] = 0;
+        }
+    }
+    
+    void update_range(int node, int start, int end, int left, int right, long long diff) {
+        propagate(node, start, end);
+        
+        if (right < start || end < left) return;
+        
+        if (left <= start && end <= right) {
+            lazy[node] += diff;
+            propagate(node, start, end);
+            return;
+        }
+        
+        int mid = (start + end) / 2;
+        update_range(node * 2, start, mid, left, right, diff);
+        update_range(node * 2 + 1, mid + 1, end, left, right, diff);
+        
+        propagate(node * 2, start, mid);
+        propagate(node * 2 + 1, mid + 1, end);
+        tree[node] = tree[node * 2] + tree[node * 2 + 1];
+    }
+    
+    long long query(int node, int start, int end, int left, int right) {
+        propagate(node, start, end);
+        
+        if (right < start || end < left) return 0;
+        
+        if (left <= start && end <= right) return tree[node];
+        
+        int mid = (start + end) / 2;
+        return query(node * 2, start, mid, left, right) +
+               query(node * 2 + 1, mid + 1, end, left, right);
+    }
+
+public:
+    LazySegmentTree(vector<int>& arr) {
+        n = arr.size();
+        tree.resize(4 * n);
+        lazy.resize(4 * n);
+        build(arr, 1, 0, n - 1);
+    }
+    
+    void update(int left, int right, long long diff) {
+        update_range(1, 0, n - 1, left, right, diff);
+    }
+    
+    long long query(int left, int right) {
+        return query(1, 0, n - 1, left, right);
+    }
+};
+
+int main() {
+    vector<int> arr = {1, 3, 5, 7, 9, 11};
+    LazySegmentTree lazy_tree(arr);
+    
+    lazy_tree.update(1, 4, 5);
+    cout << lazy_tree.query(1, 4) << endl;  // 44
+    
+    return 0;
+}`,
                     language: 'python',
                     timeComplexity: 'O(log n) - 구간 update, query',
                     spaceComplexity: 'O(n)',
@@ -1382,8 +1466,7 @@ print(lazy_tree.query(1, 0, len(arr) - 1, 1, 4))  # [8,10,12,14] = 44`,
 ## 주의사항
 - lazy 값이 유효한지 확인하는 플래그 필요
 - 덮어쓰기이므로 기존 lazy 값은 무시됨`,
-                    code: `# Python 구현
-class RangeSetSegmentTree:
+                    codePython: `class RangeSetSegmentTree:
     def __init__(self, arr):
         self.n = len(arr)
         self.tree = [0] * (4 * self.n)
@@ -1403,10 +1486,8 @@ class RangeSetSegmentTree:
     def propagate(self, node, start, end):
         """lazy 값을 자식에게 전파"""
         if self.lazy[node] is not None:
-            # 현재 노드의 구간을 lazy 값으로 덮기
             self.tree[node] = (end - start + 1) * self.lazy[node]
             
-            # 리프 노드가 아니면 자식에게 전파
             if start != end:
                 self.lazy[node * 2] = self.lazy[node]
                 self.lazy[node * 2 + 1] = self.lazy[node]
@@ -1420,7 +1501,6 @@ class RangeSetSegmentTree:
         if right < start or end < left:
             return
         
-        # 현재 구간이 완전히 포함되는 경우
         if left <= start and end <= right:
             self.lazy[node] = val
             self.propagate(node, start, end)
@@ -1445,28 +1525,21 @@ class RangeSetSegmentTree:
             return self.tree[node]
         
         mid = (start + end) // 2
-        left_sum = self.query(node * 2, start, mid, left, right)
-        right_sum = self.query(node * 2 + 1, mid + 1, end, left, right)
-        return left_sum + right_sum
+        return self.query(node * 2, start, mid, left, right) + \
+               self.query(node * 2 + 1, mid + 1, end, left, right)
 
 # 사용 예시
 arr = [1, 2, 3, 4, 5, 6]
 seg_tree = RangeSetSegmentTree(arr)
 
-print(seg_tree.query(1, 0, 5, 0, 5))  # 21 (전체 합)
+print(seg_tree.query(1, 0, 5, 0, 5))  # 21
 
-# 구간 [1, 3]을 10으로 덮기
 seg_tree.update_range(1, 0, 5, 1, 3, 10)
-print(seg_tree.query(1, 0, 5, 0, 5))  # 1+10+10+10+5+6 = 42
+print(seg_tree.query(1, 0, 5, 0, 5))  # 42
 
-# 구간 [2, 4]를 0으로 덮기
 seg_tree.update_range(1, 0, 5, 2, 4, 0)
-print(seg_tree.query(1, 0, 5, 0, 5))  # 1+10+0+0+0+6 = 17
-
-
-# C++ 구현
-"""
-#include <iostream>
+print(seg_tree.query(1, 0, 5, 0, 5))  # 17`,
+                    codeCpp: `#include <iostream>
 #include <vector>
 using namespace std;
 
@@ -1568,8 +1641,7 @@ int main() {
     cout << seg_tree.query(0, 5) << endl;  // 17
     
     return 0;
-}
-"""`,
+}`,
                     language: 'python',
                     timeComplexity: 'O(log n) - 구간 덮기, query',
                     spaceComplexity: 'O(n)',
